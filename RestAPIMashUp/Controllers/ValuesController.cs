@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using MusicInfoLibrary;
 
 namespace RestAPIMashUp.Controllers
 {
@@ -10,36 +11,21 @@ namespace RestAPIMashUp.Controllers
     [ApiController]
     public class ValuesController : ControllerBase
     {
+        private MusicInfo _musicInfo = new MusicInfo();
+
         // GET api/values
+        //[HttpGet("{id}")]
         [HttpGet]
-        public ActionResult<IEnumerable<string>> Get()
+        public async Task<ActionResult<string>> Get(string id = "")
         {
-            return new string[] { "value1", "value2" };
+            if (string.IsNullOrWhiteSpace(id))
+                return "Error: Have to specify ?id=";
+            return await GetValueFromMusicInfoAsync(id);
         }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public ActionResult<string> Get(int id)
+        private async Task<string> GetValueFromMusicInfoAsync(string id)
         {
-            return "value";
-        }
-
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            return await _musicInfo.GetArtistInfoAsync(id);
         }
     }
 }
