@@ -36,8 +36,10 @@ namespace RestAPIMashUp.Controllers
             {
                 result = await GetValueFromMusicInfoAsync(id);
 #if DEBUG
-                _cache.Set<string>(id, result, new TimeSpan(0, 2, 0));
+                // cache value for 5 min during development
+                _cache.Set<string>(id, result, new TimeSpan(0, 5, 0));
 #else
+                // ToDo: is 24 hours a valid time to get new data? Possible to have wrong data during that time.
                 _cache.Set<string>(id, result, new TimeSpan(24, 0, 0));
 #endif
             }

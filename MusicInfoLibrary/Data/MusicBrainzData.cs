@@ -172,27 +172,4 @@ namespace MusicInfoLibrary.Data
         [JsonProperty("disambiguation", NullValueHandling = NullValueHandling.Ignore)]
         public string Disambiguation { get; set; }
     }
-
-    public partial class MusicBrainz
-    {
-        public static MusicBrainz FromJson(string json) => JsonConvert.DeserializeObject<MusicBrainz>(json, MusicInfoLibrary.Data.Converter.Settings);
-    }
-
-    public static class Serialize
-    {
-        public static string ToJson(this MusicBrainz self) => JsonConvert.SerializeObject(self, MusicInfoLibrary.Data.Converter.Settings);
-    }
-
-    internal static class Converter
-    {
-        public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
-        {
-            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-            DateParseHandling = DateParseHandling.None,
-            Converters =
-            {
-                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
-            },
-        };
-    }
  }

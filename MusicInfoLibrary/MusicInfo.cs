@@ -113,7 +113,10 @@ namespace MusicInfoLibrary
                 if (relation.Type == "wikipedia")
                 {
                     // ToDo: Where do I get the artist title here?
-                    //return await GetWikipediaAsync(title);
+                    // Have not seen any result which have a wikipedia link. Guessing that this is correct.
+                    var url = relation.Url.Resource.ToString();
+                    var title = url.Split('/').LastOrDefault();
+                    return await GetWikipediaAsync(title);
                 }
             }
 
