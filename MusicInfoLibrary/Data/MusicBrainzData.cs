@@ -81,14 +81,14 @@ namespace MusicInfoLibrary.Data
 
     public partial class LifeSpan
     {
-        [JsonProperty("end", NullValueHandling = NullValueHandling.Ignore)]
-        public DateTimeOffset? End { get; set; }
+        [JsonProperty("end")]
+        public string End { get; set; }
 
         [JsonProperty("ended", NullValueHandling = NullValueHandling.Ignore)]
         public bool? Ended { get; set; }
 
-        [JsonProperty("begin", NullValueHandling = NullValueHandling.Ignore)]
-        public DateTimeOffset? Begin { get; set; }
+        [JsonProperty("begin")]
+        public string Begin { get; set; }
     }
 
     public partial class Relation
@@ -115,13 +115,13 @@ namespace MusicInfoLibrary.Data
         public Attribute AttributeValues { get; set; }
 
         [JsonProperty("end")]
-        public DateTimeOffset? End { get; set; }
+        public string End { get; set; }
 
         [JsonProperty("target-credit", NullValueHandling = NullValueHandling.Ignore)]
         public string TargetCredit { get; set; }
 
         [JsonProperty("begin")]
-        public DateTimeOffset? Begin { get; set; }
+        public string Begin { get; set; }
 
         [JsonProperty("attributes", NullValueHandling = NullValueHandling.Ignore)]
         public List<object> Attributes { get; set; }
