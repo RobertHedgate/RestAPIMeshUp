@@ -92,7 +92,7 @@ namespace MusicInfoLibrary
             }
             catch (Exception ex)
             {
-                // Skip errornus albums
+                // Some albums doesn´t have a image. Image will be null.
             }
             return albumData;
         }
@@ -163,7 +163,7 @@ namespace MusicInfoLibrary
             return "";
         }
 
-        private string CleanUpArtistData(string artistData)
+        public string CleanUpArtistData(string artistData)
         {
             // ToDo: Is there a better way to remove unwanted syntax?
             artistData = artistData.Replace("<p class=\"mw-empty-elt\"> \n</p>\n\n<p class=\"mw-empty-elt\">\n\n</p>\n", "");
