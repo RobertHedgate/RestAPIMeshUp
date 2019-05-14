@@ -25,18 +25,18 @@ namespace RestAPIMashUp.Controllers
         public async Task<ActionResult<string>> Get(string id = "", bool usecache = true)
         {
 #if DEBUG
-            if (id == "")
-                id = "0383dadf-2a4e-4d10-a46a-e9e041da8eb3";
+            //if (id == "")
+            //    id = "0383dadf-2a4e-4d10-a46a-e9e041da8eb3";
 #endif
             if (string.IsNullOrWhiteSpace(id))
-                return "Error: Have to specify ?id=";
+                return "{\"Error\": \"Have to specify id parameter (?id=)\"}";
 
             var result = usecache ? (string)_cache.Get(id) : "";
             if (string.IsNullOrEmpty(result))
             {
                 result = await GetValueFromMusicInfoAsync(id);
 #if DEBUG
-                // cache value for 5 min during development
+                // cache value for shorter time during development
                 _cache.Set<string>(id, result, new TimeSpan(0, 5, 0));
 #else
                 // ToDo: is 24 hours a valid time to get new data? Possible to have wrong data during that time.

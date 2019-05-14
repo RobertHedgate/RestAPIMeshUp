@@ -21,13 +21,14 @@ namespace MusicInfoLibrary
 
         public async Task<string> GetArtistInfoAsync(string id)
         {
+            var response = "";
             if (string.IsNullOrWhiteSpace(id))
-                return "";
+                return "{\"Error\": \"id is null or empty\"}";
             var url = $"http://musicbrainz.org/ws/2/artist/{id}?&fmt=json&inc=url-rels+release-groups";
-            var response = await _httpClient.GetStringAsync(url);
             try
             {
-                var musicBrainz = JsonConvert.DeserializeObject<MusicBrainz>(response);
+                var musicBrainzJson = await _httpClient.GetStringAsync(url);
+                var musicBrainz = JsonConvert.DeserializeObject<MusicBrainz>(musicBrainzJson);
                 var wikiDataTask = GetWikiDataAsync(musicBrainz);
                 var albumListTask = GetAlbumListWithCoverAsync(musicBrainz);
 
@@ -46,7 +47,7 @@ namespace MusicInfoLibrary
             }
             catch (Exception ex)
             {
-                response = "Error";
+                response = "{\"Error\": \"Something went wrong\"}";
             }
             return response;
         }
@@ -101,7 +102,7 @@ namespace MusicInfoLibrary
         {
             foreach (var relation in musicBrainz.Relations)
             {
-                if (relation.Type == "wikidata")
+                if (relation.Type.ToLower() == "wikidata")
                 {
                     var url = relation.Url.Resource.ToString();
                     var id = url.Split('/').LastOrDefault();
@@ -110,7 +111,7 @@ namespace MusicInfoLibrary
                     var wikiData = DecodeWikiData(response, id);
                     return await GetWikipediaAsync(wikiData.Title);
                 }
-                if (relation.Type == "wikipedia")
+                if (relation.Type.ToLower() == "wikipedia")
                 {
                     // ToDo: Where do I get the artist title here?
                     // Have not seen any result which have a wikipedia link. Guessing that this is correct.
