@@ -28,13 +28,20 @@ namespace MusicInfoLibrary
             try
             {
                 var musicBrainz = JsonConvert.DeserializeObject<MusicBrainz>(response);
-                var wikiData = await GetWikiDataAsync(musicBrainz);
-                var albumList = await GetAlbumListWithCoverAsync(musicBrainz);
+                var wikiDataTask = GetWikiDataAsync(musicBrainz);
+                var albumListTask = GetAlbumListWithCoverAsync(musicBrainz);
 
-                var responseData = new ResponseData();
-                responseData.Mbid = musicBrainz.Id.ToString();
-                responseData.Description = wikiData;
-                responseData.Albums = albumList;
+                await Task.WhenAll(wikiDataTask, albumListTask);
+
+                var wikiData = await wikiDataTask;
+                var albumList = await albumListTask;
+
+                var responseData = new ResponseData
+                {
+                    Mbid = musicBrainz.Id.ToString(),
+                    Description = wikiData,
+                    Albums = albumList
+                };
                 return JsonConvert.SerializeObject(responseData);
             }
             catch (Exception ex)
@@ -48,38 +55,46 @@ namespace MusicInfoLibrary
         {
             var albumDataList = new List<AlbumData>();
 
+            var listOfTasks = new List<Task<AlbumData>>();
             foreach (var album in musicBrainz.ReleaseGroups)
             {
                 if (album.PrimaryType.ToLower() == "album")
                 {
-                        var albumData = new AlbumData
-                        {
-                            Title = album.Title,
-                            Id = album.Id.ToString()
-                        };
-                        var url = $"http://coverartarchive.org/release-group/{album.Id}";
-                        try
-                        {
-                            var response = await _httpClient.GetStringAsync(url);
-                            var coverArt = JsonConvert.DeserializeObject<CoverArtData>(response);
-                            foreach (var image in coverArt.images)
-                            {
-                                if (image.front)
-                                {
-                                    albumData.Image = image.image;
-                                    break;
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            // Skip errornus albums
-                        }
-                        albumDataList.Add(albumData);
+                    listOfTasks.Add(GetAlbumDataAsync(album));
                 }
             }
+            var list = await Task.WhenAll<AlbumData>(listOfTasks);
+            albumDataList.AddRange(list);
 
             return albumDataList;
+        }
+
+        private async Task<AlbumData> GetAlbumDataAsync(ReleaseGroup album)
+        {
+            var albumData = new AlbumData
+            {
+                Title = album.Title,
+                Id = album.Id.ToString()
+            };
+            var url = $"http://coverartarchive.org/release-group/{album.Id}";
+            try
+            {
+                var response = await _httpClient.GetStringAsync(url);
+                var coverArt = JsonConvert.DeserializeObject<CoverArtData>(response);
+                foreach (var image in coverArt.images)
+                {
+                    if (image.front)
+                    {
+                        albumData.Image = image.image;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Skip errornus albums
+            }
+            return albumData;
         }
 
         private async Task<string> GetWikiDataAsync(MusicBrainz musicBrainz)
@@ -91,7 +106,6 @@ namespace MusicInfoLibrary
                     var url = relation.Url.Resource.ToString();
                     var id = url.Split('/').LastOrDefault();
                     var wikiUrl = $"https://www.wikidata.org/w/api.php?action=wbgetentities&ids={id}&format=json&props=sitelinks";
-                    //wikiUrl = $"https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q11649&format=json&props=sitelinks";
                     var response = await _httpClient.GetStringAsync(wikiUrl);
                     var wikiData = DecodeWikiData(response, id);
                     return await GetWikipediaAsync(wikiData.Title);
