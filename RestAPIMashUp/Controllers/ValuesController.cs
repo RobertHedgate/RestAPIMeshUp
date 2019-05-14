@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using MusicInfoLibrary;
 
 namespace RestAPIMashUp.Controllers
@@ -12,11 +13,16 @@ namespace RestAPIMashUp.Controllers
     public class ValuesController : ControllerBase
     {
         private MusicInfo _musicInfo = new MusicInfo();
+        private IMemoryCache _cache;
+
+        public ValuesController(IMemoryCache memoryCache)
+        {
+            _cache = memoryCache;
+        }
 
         // GET api/values
-        //[HttpGet("{id}")]
         [HttpGet]
-        public async Task<ActionResult<string>> Get(string id = "")
+        public async Task<ActionResult<string>> Get(string id = "", bool usecache = true)
         {
 #if DEBUG
             if (id == "")
@@ -24,7 +30,19 @@ namespace RestAPIMashUp.Controllers
 #endif
             if (string.IsNullOrWhiteSpace(id))
                 return "Error: Have to specify ?id=";
-            return await GetValueFromMusicInfoAsync(id);
+
+            var result = usecache ? (string)_cache.Get(id) : "";
+            if (string.IsNullOrEmpty(result))
+            {
+                result = await GetValueFromMusicInfoAsync(id);
+#if DEBUG
+                _cache.Set<string>(id, result, new TimeSpan(0, 2, 0));
+#else
+                _cache.Set<string>(id, result, new TimeSpan(24, 0, 0));
+#endif
+            }
+
+            return result;
         }
 
         private async Task<string> GetValueFromMusicInfoAsync(string id)

@@ -52,23 +52,30 @@ namespace MusicInfoLibrary
             {
                 if (album.PrimaryType.ToLower() == "album")
                 {
-                    var albumData = new AlbumData
-                    {
-                        Name = album.Title,
-                        Id = album.Id.ToString()
-                    };
-                    var url = $"http://coverartarchive.org/release-group/{album.Id}";
-                    var response = await _httpClient.GetStringAsync(url);
-                    var coverArt = JsonConvert.DeserializeObject<CoverArtData>(response);
-                    foreach (var image in coverArt.images)
-                    {
-                        if (image.front)
+                        var albumData = new AlbumData
                         {
-                            albumData.CoverUrl = image.image;
-                            break;
+                            Title = album.Title,
+                            Id = album.Id.ToString()
+                        };
+                        var url = $"http://coverartarchive.org/release-group/{album.Id}";
+                        try
+                        {
+                            var response = await _httpClient.GetStringAsync(url);
+                            var coverArt = JsonConvert.DeserializeObject<CoverArtData>(response);
+                            foreach (var image in coverArt.images)
+                            {
+                                if (image.front)
+                                {
+                                    albumData.Image = image.image;
+                                    break;
+                                }
+                            }
                         }
-                    }
-                    albumDataList.Add(albumData);
+                        catch (Exception ex)
+                        {
+                            // Skip errornus albums
+                        }
+                        albumDataList.Add(albumData);
                 }
             }
 
@@ -88,6 +95,11 @@ namespace MusicInfoLibrary
                     var response = await _httpClient.GetStringAsync(wikiUrl);
                     var wikiData = DecodeWikiData(response, id);
                     return await GetWikipediaAsync(wikiData.Title);
+                }
+                if (relation.Type == "wikipedia")
+                {
+                    // ToDo: Where do I get the artist title here?
+                    //return await GetWikipediaAsync(title);
                 }
             }
 
@@ -129,11 +141,21 @@ namespace MusicInfoLibrary
                 foreach (var data in page)
                 {
                     var artistData = (string)data.SelectToken("extract");
+                    artistData = CleanUpArtistData(artistData);
                     return artistData;
                 }
             }
 
             return "";
+        }
+
+        private string CleanUpArtistData(string artistData)
+        {
+            // ToDo: Is there a better way to remove unwanted syntax?
+            artistData = artistData.Replace("<p class=\"mw-empty-elt\"> \n</p>\n\n<p class=\"mw-empty-elt\">\n\n</p>\n", "");
+            artistData = artistData.Replace("<p class=\"mw-empty-elt\">\n</p>\n\n<p class=\"mw-empty-elt\">\n\n</p>\n", "");
+            artistData = artistData.Replace("\n\n\n", "");
+            return artistData;
         }
     }
 }
